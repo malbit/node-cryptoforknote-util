@@ -212,6 +212,14 @@ namespace cryptonote
     loki_version_4_tx_types,
   };
 
+  enum arqma_version
+  {
+    arqma_version_0 = 0,
+    arqma_version_1,
+    arqma_version_2,
+    arqma_version_3,
+  };
+
   class transaction_prefix
   {
 
@@ -244,15 +252,29 @@ namespace cryptonote
       loki_type_count,
     };
 
+    enum arqma_type_t
+    {
+      arqma_type_standard,
+      arqma_type_deregister,
+      arqma_type_key_image_unlock,
+      arqma_type_stake,
+      arqma_type_count,
+    };
+
     union
     {
       bool is_deregister;
       uint16_t type;
     };
 
+
     BEGIN_SERIALIZE()
       VARINT_FIELD(version)
-      if (version > loki_version_2 && (blob_type == BLOB_TYPE_CRYPTONOTE_LOKI || blob_type == BLOB_TYPE_CRYPTONOTE_XTNC))
+      if(version > arqma_version_2 && blob_type == BLOB_TYPE_CRYPTONOTE_ARQ) {
+        FIELD(output_unlock_times)
+        FIELD(is_deregister)
+      }
+      if(version > loki_version_2 && (blob_type == BLOB_TYPE_CRYPTONOTE_LOKI || blob_type == BLOB_TYPE_CRYPTONOTE_XTNC))
       {
         FIELD(output_unlock_times)
         if (version == loki_version_3_per_output_unlock_times)
@@ -261,11 +283,15 @@ namespace cryptonote
       VARINT_FIELD(unlock_time)
       FIELD(vin)
       FIELD(vout)
-      if (blob_type == BLOB_TYPE_CRYPTONOTE_LOKI || blob_type == BLOB_TYPE_CRYPTONOTE_XTNC)
+      if (blob_type == BLOB_TYPE_CRYPTONOTE_LOKI || blob_type == BLOB_TYPE_CRYPTONOTE_XTNC || blob_type == BLOB_TYPE_CRYPTONOTE_ARQ)
       {
-        if (version >= loki_version_3_per_output_unlock_times && vout.size() != output_unlock_times.size()) return false;
+        if((version >= loki_version_3_per_output_unlock_times || version >= arqma_version_3) && vout.size() != output_unlock_times.size()) return false;
       }
       FIELD(extra)
+      if(blob_type == BLOB_TYPE_CRYPTONOTE_ARQ && version >= arqma_version_3) {
+        VARINT_FIELD(type)
+        if(static_cast<uint16_t>(type) >= arqma_type_count) return false;
+      }
       if ((blob_type == BLOB_TYPE_CRYPTONOTE_LOKI || blob_type == BLOB_TYPE_CRYPTONOTE_XTNC) && version >= loki_version_4_tx_types)
       {
         VARINT_FIELD(type)

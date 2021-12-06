@@ -74,12 +74,7 @@ inline bool do_serialize(Archive &ar, bool &v)
 #define END_SERIALIZE() return true;}
 
 
-#define VALUE(f) \
-  do { \
-    ar.tag(#f); \
-    bool r = ::do_serialize(ar, f); \
-    if (!r || !ar.stream().good()) return false; \
-  } while(0);
+#define VALUE(f) FIELD(f)
 #define FIELD_N(t, f) \
   do { \
     ar.tag(t); \
@@ -91,18 +86,8 @@ inline bool do_serialize(Archive &ar, bool &v)
     bool r = ::do_serialize(ar, f); \
     if (!r || !ar.stream().good()) return false; \
   } while(0);
-#define FIELD(f) \
-  do { \
-    ar.tag(#f); \
-    bool r = ::do_serialize(ar, f); \
-    if (!r || !ar.stream().good()) return false; \
-  } while(0);
-#define VARINT_FIELD(f) \
-  do { \
-    ar.tag(#f); \
-    ar.serialize_varint(f); \
-    if (!ar.stream().good()) return false; \
-  } while(0);
+#define FIELD(f) FIELD_N(#f, f)
+#define VARINT_FIELD(f) VARINT_FIELD_N(#f, f)
 #define VARINT_FIELD_N(t, f) \
   do { \
     ar.tag(t); \
